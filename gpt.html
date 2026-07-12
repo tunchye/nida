@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UI Component & Interactivity Presentation</title>
+  <style>
+    :root {
+      --blue: #0f7cff;
+      --blue-2: #65beff;
+      --blue-3: #0063ef;
+      --white: #ffffff;
+      --ink: rgba(255,255,255,.96);
+      --muted: rgba(255,255,255,.68);
+      --line: rgba(255,255,255,.28);
+      --glass: rgba(255,255,255,.16);
+      --shadow: 0 30px 80px rgba(0, 63, 180, .28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #e8eef7;
+      color: var(--white);
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(145deg, #0874ff 0%, #2b97ff 46%, #9edbff 100%);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .deck::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(255,255,255,.22), transparent 25%),
+        radial-gradient(circle at 78% 10%, rgba(255,255,255,.18), transparent 22%),
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: auto, auto, 8.333vw 100%, 100% 14.285vh;
+      opacity: .55;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 6vh 6.5vw;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto 1fr auto;
+      column-gap: 2vw;
+      opacity: 0;
+      transform: translateX(4vw) scale(.985);
+      transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+      z-index: 5;
+    }
+
+    .kicker {
+      grid-column: 1 / 13;
+      font-size: clamp(11px, .9vw, 14px);
+      line-height: 1;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 3;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(56px, 10vw, 150px);
+      line-height: .82;
+      letter-spacing: -.08em;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: var(--ink);
+      max-width: 11ch;
+      z-index: 3;
+    }
+
+    h2 {
+      font-size: clamp(42px, 7vw, 104px);
+      line-height: .86;
+      letter-spacing: -.07em;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: var(--ink);
+      z-index: 3;
+    }
+
+    h3 {
+      font-size: clamp(22px, 2.3vw, 36px);
+      letter-spacing: -.04em;
+      line-height: 1;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .title-block {
+      grid-column: 1 / 8;
+      align-self: center;
+      z-index: 3;
+    }
+
+    .large-number {
+      display: inline-grid;
+      place-items: center;
+      width: .9em;
+      height: .9em;
+      border: 2px solid rgba(255,255,255,.9);
+      border-radius: 50%;
+      font-weight: 400;
+      letter-spacing: -.08em;
+      margin-left: .12em;
+    }
+
+    .subline {
+      margin-top: 3vh;
+      max-width: 720px;
+      font-size: clamp(18px, 2vw, 32px);
+      line-height: 1.14;
+      letter-spacing: -.035em;
+      color: var(--ink);
+      font-weight: 620;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: clamp(14px, 1.1vw, 18px);
+      line-height: 1.45;
+      max-width: 460px;
+      letter-spacing: -.01em;
+    }
+
+    .body-copy {
+      grid-column: 8 / 12;
+      align-self: center;
+      z-index: 3;
+    }
+
+    .wide-copy {
+      grid-column: 7 / 12;
+      align-self: center;
+      z-index: 3;
+    }
+
+    .footer {
+      grid-column: 1 / 13;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      color: var(--muted);
+      font-size: clamp(10px, .85vw, 13px);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      z-index: 6;
+    }
+
+    .chips {
+      display: flex;
+      gap: .65rem;
+      flex-wrap: wrap;
+      margin-top: 3vh;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      padding: .72em 1em;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(12px);
+      font-size: clamp(12px, 1vw, 16px);
+      font-weight: 700;
+      letter-spacing: -.015em;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.1vw;
+      margin-top: 3vh;
+    }
+
+    .mini-card {
+      min-height: 132px;
+      border-top: 1px solid var(--line);
+      padding-top: 1.1rem;
+    }
+
+    .mini-card p {
+      margin-top: .85rem;
+      color: var(--muted);
+      font-size: clamp(14px, 1.1vw, 17px);
+      line-height: 1.35;
+    }
+
+    .number-list {
+      list-style: none;
+      padding: 0;
+      margin: 3vh 0 0;
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .number-list li {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 1.2rem;
+      align-items: start;
+      color: var(--ink);
+      font-size: clamp(18px, 1.7vw, 28px);
+      line-height: 1.05;
+      letter-spacing: -.045em;
+      font-weight: 760;
+    }
+
+    .number-list span {
+      width: 44px;
+      height: 44px;
+      border: 1.5px solid rgba(255,255,255,.8);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--white);
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .ui-demo {
+      grid-column: 8 / 13;
+      align-self: center;
+      display: grid;
+      gap: 1.1rem;
+      z-index: 4;
+    }
+
+    .demo-panel {
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 32px;
+      padding: clamp(18px, 2vw, 28px);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .demo-row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 1rem 1.35rem;
+      font-weight: 850;
+      letter-spacing: -.025em;
+      color: var(--blue-3);
+      background: white;
+      box-shadow: 0 16px 30px rgba(0, 62, 170, .18);
+    }
+
+    .btn.secondary { color: white; background: transparent; border: 1px solid rgba(255,255,255,.66); box-shadow: none; }
+    .btn.link { color: white; background: transparent; box-shadow: none; text-decoration: underline; text-underline-offset: 5px; padding-left: .25rem; }
+    .btn.disabled { opacity: .42; }
+
+    .field {
+      display: grid;
+      gap: .5rem;
+      margin-bottom: 1rem;
+      color: var(--ink);
+      font-weight: 750;
+      letter-spacing: -.02em;
+    }
+
+    .input {
+      height: 54px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.55);
+      background: rgba(255,255,255,.18);
+      color: white;
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+
+    .helper { color: rgba(255,255,255,.65); font-size: 13px; font-weight: 500; }
+    .error { color: #fff; font-size: 13px; font-weight: 700; }
+
+    .product-card {
+      border-radius: 30px;
+      background: rgba(255,255,255,.88);
+      color: #0b58c8;
+      padding: 1.2rem;
+      width: min(100%, 380px);
+      box-shadow: var(--shadow);
+    }
+
+    .product-visual {
+      height: 140px;
+      border-radius: 22px;
+      background: radial-gradient(circle at 30% 35%, #fff 0 13%, transparent 14%), linear-gradient(135deg, #e5f5ff, #9edbff);
+      margin-bottom: 1rem;
+    }
+
+    .product-card h3 { color: #0063ef; }
+    .product-card p { color: rgba(0,63,180,.72); margin: .6rem 0 1rem; line-height: 1.35; }
+
+    .toast {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      background: white;
+      color: #0063ef;
+      border-radius: 999px;
+      padding: .9rem 1.15rem;
+      font-weight: 850;
+      box-shadow: var(--shadow);
+    }
+
+    .modal {
+      margin-top: 1.1rem;
+      background: rgba(255,255,255,.92);
+      color: #085ed4;
+      border-radius: 30px;
+      padding: 1.3rem;
+      max-width: 400px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal p { color: rgba(0,63,180,.66); margin: .55rem 0 1rem; }
+
+    .progressbar {
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.3);
+      overflow: hidden;
+      margin: 1.1rem 0;
+    }
+
+    .progressbar div { width: 60%; height: 100%; background: white; border-radius: inherit; }
+
+    .skeleton { display: grid; gap: .65rem; }
+    .skeleton i { display: block; height: 18px; border-radius: 999px; background: rgba(255,255,255,.36); }
+    .skeleton i:nth-child(1) { width: 92%; }
+    .skeleton i:nth-child(2) { width: 70%; }
+    .skeleton i:nth-child(3) { width: 48%; }
+
+    .table-like {
+      display: grid;
+      gap: .55rem;
+      margin-top: 2vh;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: minmax(120px, .7fr) 1fr 1fr;
+      gap: 1rem;
+      padding: .78rem 0;
+      border-top: 1px solid rgba(255,255,255,.23);
+      font-size: clamp(14px, 1.1vw, 17px);
+      color: rgba(255,255,255,.82);
+    }
+    .table-row strong { color: white; }
+
+    .blob {
+      position: absolute;
+      border-radius: 45% 55% 62% 38% / 46% 34% 66% 54%;
+      filter: drop-shadow(0 35px 55px rgba(0,50,170,.22));
+      z-index: 2;
+      opacity: .96;
+      animation: float 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .blob::after {
+      content: "";
+      position: absolute;
+      inset: 13% 12% auto auto;
+      width: 24%;
+      height: 20%;
+      background: rgba(255,255,255,.65);
+      border-radius: 50%;
+      filter: blur(8px);
+    }
+
+    .blob.a { width: 33vw; height: 22vw; right: -7vw; top: 14vh; background: radial-gradient(circle at 72% 32%, rgba(255,255,255,.85), transparent 13%), linear-gradient(135deg, #ff7a18, #ffb787 36%, rgba(111,187,255,.74) 72%, #d7ebff); }
+    .blob.b { width: 24vw; height: 14vw; left: -6vw; bottom: 9vh; background: linear-gradient(120deg, #f8fbff, #41ee7c 46%, #9f7bff 100%); animation-delay: -2s; }
+    .blob.c { width: 18vw; height: 18vw; right: 11vw; bottom: 9vh; background: linear-gradient(135deg, rgba(255,255,255,.8), rgba(116,208,255,.48), #006cff); opacity: .7; animation-delay: -4s; }
+    .blob.d { width: 18vw; height: 13vw; right: 6vw; top: 8vh; background: linear-gradient(135deg, #ffffff, #41ee7c 58%, #0874ff); animation-delay: -1s; }
+    .blob.e { width: 19vw; height: 12vw; right: 8vw; bottom: 16vh; background: linear-gradient(135deg, #f1f5ff, #ff7a18 50%, #835dff); animation-delay: -3s; }
+
+    @keyframes float {
+      0%,100% { transform: translate3d(0,0,0) rotate(-4deg); }
+      50% { transform: translate3d(0,-18px,0) rotate(5deg); }
+    }
+
+    .progress {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 5px;
+      background: rgba(255,255,255,.85);
+      width: 0;
+      transition: width .35s ease;
+      z-index: 20;
+    }
+
+    .nav-hint {
+      position: absolute;
+      right: 2.2vw;
+      bottom: 2.1vh;
+      z-index: 30;
+      color: rgba(255,255,255,.7);
+      font-size: 12px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 900px) {
+      .slide { padding: 5vh 6vw; grid-template-columns: 1fr; }
+      .title-block, .body-copy, .wide-copy, .ui-demo { grid-column: 1; }
+      .body-copy, .wide-copy, .ui-demo { align-self: end; }
+      .mini-grid { grid-template-columns: 1fr; }
+      .blob.a { width: 56vw; height: 42vw; }
+      .blob.b, .blob.c, .blob.d, .blob.e { display: none; }
+      .table-row { grid-template-columns: 1fr; gap: .25rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-live="polite">
+    <section class="slide active">
+      <div class="kicker"><span>UI COMPONENTS</span><span>LECTURE / 01</span></div>
+      <div class="title-block">
+        <h1>UI<br>Component<br>& Interactivity</h1>
+        <p class="subline">Building predictable, accessible, and responsive digital experiences.</p>
+      </div>
+      <div class="blob a"></div><div class="blob b"></div>
+      <div class="footer"><span>Modern Swiss Editorial × Creative Technology</span><span>Use ← →</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>OVERVIEW</span><span>02</span></div>
+      <div class="title-block">
+        <h2>Building<br>Blocks</h2>
+        <p class="subline">UI components let users interact with a product in a consistent and predictable way.</p>
+      </div>
+      <div class="body-copy">
+        <p class="note">Interactivity is how components respond to clicking, typing, hovering, scrolling, loading, and errors. Good interaction always makes the system status clear.</p>
+        <div class="chips"><span class="chip">Usability</span><span class="chip">Accessibility</span><span class="chip">Feedback</span><span class="chip">Consistency</span></div>
+      </div>
+      <div class="blob c"></div>
+      <div class="footer"><span>Clean / Calm / Optimistic</span><span>02 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>CORE KNOWLEDGE</span><span>03</span></div>
+      <div class="title-block">
+        <h2>Four<br>Systems</h2>
+      </div>
+      <div class="wide-copy">
+        <ol class="number-list">
+          <li><span>01</span>Button & state: primary, secondary, text link.</li>
+          <li><span>02</span>Form & input design: text fields, dropdowns, checkboxes.</li>
+          <li><span>03</span>Cards & containers: visually grouping information.</li>
+          <li><span>04</span>Feedback & micro interactions: toast, modal, transition, loading.</li>
+        </ol>
+      </div>
+      <div class="blob d"></div>
+      <div class="footer"><span>12-column grid / generous negative space</span><span>03 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>BUTTON & STATE</span><span>04</span></div>
+      <div class="title-block">
+        <h2>Action<br>Hierarchy</h2>
+        <p class="subline">Buttons trigger actions and communicate priority.</p>
+      </div>
+      <div class="ui-demo">
+        <div class="demo-panel">
+          <h3>Button Types</h3><br>
+          <div class="demo-row">
+            <button class="btn">Submit</button>
+            <button class="btn secondary">Cancel</button>
+            <button class="btn link">Read More</button>
+          </div>
+        </div>
+        <div class="mini-grid">
+          <div class="mini-card"><h3>Primary</h3><p>Main action. Filled background. Usually one per section.</p></div>
+          <div class="mini-card"><h3>Secondary</h3><p>Alternative action. Lower emphasis. Supports the flow.</p></div>
+        </div>
+      </div>
+      <div class="footer"><span>High emphasis → Low emphasis</span><span>04 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>BUTTON STATES</span><span>05</span></div>
+      <div class="title-block">
+        <h2>Visible<br>States</h2>
+        <p class="subline">A button should show what is happening before, during, and after interaction.</p>
+      </div>
+      <div class="body-copy">
+        <div class="table-like">
+          <div class="table-row"><strong>Default</strong><span>Normal appearance</span><span>Submit</span></div>
+          <div class="table-row"><strong>Hover</strong><span>Pointer is over it</span><span>Slightly darker</span></div>
+          <div class="table-row"><strong>Pressed</strong><span>User is clicking</span><span>Pressed effect</span></div>
+          <div class="table-row"><strong>Focus</strong><span>Keyboard selected</span><span>Visible outline</span></div>
+          <div class="table-row"><strong>Disabled</strong><span>Unavailable</span><span>Reduced opacity</span></div>
+          <div class="table-row"><strong>Loading</strong><span>Waiting</span><span>Loading...</span></div>
+        </div>
+      </div>
+      <div class="blob e"></div>
+      <div class="footer"><span>Short labels / tap-friendly / always show state</span><span>05 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>FORM & INPUT DESIGN</span><span>06</span></div>
+      <div class="title-block">
+        <h2>Reduce<br>Friction</h2>
+        <p class="subline">Good forms help users complete tasks with fewer errors.</p>
+      </div>
+      <div class="ui-demo">
+        <div class="demo-panel">
+          <div class="field"><span>Email</span><div class="input">john@ <span>✕</span></div><span class="error">Please enter a valid email address.</span></div>
+          <div class="field"><span>Country</span><div class="input">Thailand <span>⌄</span></div></div>
+          <div class="demo-row"><span class="chip">☐ Newsletter</span><span class="chip">☑ Terms accepted</span></div>
+        </div>
+      </div>
+      <div class="footer"><span>Label / Input / Helper / Error</span><span>06 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>FORM BEST PRACTICES</span><span>07</span></div>
+      <div class="title-block">
+        <h2>Clear<br>Inputs</h2>
+      </div>
+      <div class="wide-copy">
+        <div class="mini-grid">
+          <div class="mini-card"><h3>Text Field</h3><p>Use for names, email, passwords, addresses. Always provide a clear label.</p></div>
+          <div class="mini-card"><h3>Dropdown</h3><p>Use when there are many options and the user chooses one.</p></div>
+          <div class="mini-card"><h3>Checkbox</h3><p>Use for multiple selections, settings, permissions, or agreement.</p></div>
+          <div class="mini-card"><h3>Validation</h3><p>Give immediate feedback, explain the error, and show how to fix it.</p></div>
+        </div>
+      </div>
+      <div class="blob c"></div>
+      <div class="footer"><span>Never rely only on placeholder text</span><span>07 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>CARDS & CONTAINERS</span><span>08</span></div>
+      <div class="title-block">
+        <h2>Group<br>Information</h2>
+        <p class="subline">Cards and containers separate related content into manageable sections.</p>
+      </div>
+      <div class="ui-demo">
+        <article class="product-card">
+          <div class="product-visual"></div>
+          <h3>Wireless Mouse</h3>
+          <p>Comfortable ergonomic design with one clear action.</p>
+          <button class="btn">Buy Now</button>
+        </article>
+      </div>
+      <div class="footer"><span>Image / Title / Description / Action</span><span>08 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>VISUAL GROUPING</span><span>09</span></div>
+      <div class="title-block">
+        <h2>Readable<br>Structure</h2>
+      </div>
+      <div class="wide-copy">
+        <div class="mini-grid">
+          <div class="mini-card"><h3>Proximity</h3><p>Items close together appear related.</p></div>
+          <div class="mini-card"><h3>Alignment</h3><p>Clean alignment improves scanning and rhythm.</p></div>
+          <div class="mini-card"><h3>White Space</h3><p>Empty space improves clarity and reduces cognitive load.</p></div>
+          <div class="mini-card"><h3>Borders & Shadows</h3><p>Use subtle separation. Avoid excessive decoration.</p></div>
+        </div>
+      </div>
+      <div class="blob b"></div>
+      <div class="footer"><span>Consistent spacing / hierarchy / obvious clickable areas</span><span>09 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>FEEDBACK & MICRO INTERACTION</span><span>10</span></div>
+      <div class="title-block">
+        <h2>System<br>Response</h2>
+        <p class="subline">Micro interactions reassure users that the interface is working.</p>
+      </div>
+      <div class="ui-demo">
+        <div class="toast">✓ Profile updated successfully</div>
+        <div class="modal">
+          <h3>Delete this file?</h3>
+          <p>This action cannot be undone.</p>
+          <div class="demo-row"><button class="btn secondary" style="color:#085ed4;border-color:rgba(0,99,239,.35)">Cancel</button><button class="btn">Delete</button></div>
+        </div>
+      </div>
+      <div class="footer"><span>Toast / Modal / Transition / Loading</span><span>10 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>LOADING & ACCESSIBILITY</span><span>11</span></div>
+      <div class="title-block">
+        <h2>Inclusive<br>Feedback</h2>
+        <p class="subline">Every interactive component should be accessible and understandable.</p>
+      </div>
+      <div class="body-copy">
+        <div class="demo-panel">
+          <h3>Loading Indicator</h3>
+          <div class="progressbar"><div></div></div>
+          <div class="skeleton"><i></i><i></i><i></i></div>
+        </div>
+        <div class="chips"><span class="chip">Keyboard focus</span><span class="chip">Clear labels</span><span class="chip">Readable errors</span><span class="chip">Announced loading</span></div>
+      </div>
+      <div class="footer"><span>Fast / Smooth / Functional animation</span><span>11 / 11</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="kicker"><span>KEY TAKEAWAYS</span><span>END</span></div>
+      <div class="title-block">
+        <h2>Design<br>For Clarity</h2>
+      </div>
+      <div class="wide-copy">
+        <ol class="number-list">
+          <li><span>01</span>Use primary buttons for the most important action.</li>
+          <li><span>02</span>Design forms with labels, validation, and clear controls.</li>
+          <li><span>03</span>Organize content with cards, containers, spacing, and alignment.</li>
+          <li><span>04</span>Use feedback and micro interactions to keep users informed.</li>
+        </ol>
+      </div>
+      <div class="blob a"></div>
+      <div class="footer"><span>Modern / Optimistic / Spacious / Premium</span><span>THANK YOU</span></div>
+    </section>
+
+    <div class="progress" id="progress"></div>
+    <div class="nav-hint" id="counter">01 / 12</div>
+  </main>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const progress = document.getElementById('progress');
+    const counter = document.getElementById('counter');
+    let index = 0;
+
+    function showSlide(next) {
+      index = Math.max(0, Math.min(slides.length - 1, next));
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      progress.style.width = ((index + 1) / slides.length * 100) + '%';
+      counter.textContent = String(index + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (['ArrowRight', ' ', 'PageDown'].includes(event.key)) showSlide(index + 1);
+      if (['ArrowLeft', 'PageUp'].includes(event.key)) showSlide(index - 1);
+      if (event.key === 'Home') showSlide(0);
+      if (event.key === 'End') showSlide(slides.length - 1);
+    });
+
+    let startX = null;
+    window.addEventListener('pointerdown', e => startX = e.clientX);
+    window.addEventListener('pointerup', e => {
+      if (startX === null) return;
+      const delta = e.clientX - startX;
+      if (Math.abs(delta) > 60) showSlide(index + (delta < 0 ? 1 : -1));
+      startX = null;
+    });
+
+    showSlide(0);
+  </script>
+</body>
+</html>
